@@ -28,7 +28,19 @@
               </div>
             </div>
           </div>
+          <div class="vue-picture-cut_slider" v-if="scaleControl">
+            <input type="range" v-model="sliderAngle" :min="-180" :max="180"/>
+            <div class="vue-picture-cut_slider-box">
+              <div class="vue-picture-cut_slider-box-bar"
+                   :style="{left: sliderAngle * 100 / 361 + 50 + '%'}">
+                <div class="vue-picture-cut_slider-box-tips">
+                  {{ sliderAngle }}°
+                </div>
+              </div>
+            </div>
+          </div>
           <div v-show="src" class="vue-picture-cut_button" @click="sureCut">ok</div>
+          <!-- 在父组件通过refs调用sureCut方法 -->
         </div>
       </slot>
     </div>

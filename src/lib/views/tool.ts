@@ -205,7 +205,7 @@ export default {
 
     ctx.translate(x + w / 2 , y + h /2);
     ctx.scale(sH , sV);
-
+    img.setAttribute("crossOrigin",'Anonymous')
     ctx.drawImage(img, 0, 0, img.width, img.height,
       -w / 2, -h / 2, w, h);
 

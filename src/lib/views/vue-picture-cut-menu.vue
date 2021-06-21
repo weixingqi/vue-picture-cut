@@ -8,12 +8,26 @@
     <div class="vue-picture-cut-menu_slider">
       <div class="vue-picture-cut-menu_slider-box">
         <span>{{ menuRotateName }}</span>
-        <input type="range" v-model="sliderAngle" :min="-180" :max="180"/>
+        <input type="range" v-model="sliderAngle" :min="0" :max="360"/>
         <div class="vue-picture-cut-menu_slider-box-bar">
           <div class="vue-picture-cut-menu_slider-box-button"
-               :style="{left: sliderAngle * 100 / 361 + 50 + '%'}">
+               :style="{left: sliderAngle * 100 / 361 + '%'}">
             <div class="vue-picture-cut-menu_slider-box-tips">
               {{ sliderAngle }}°
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="vue-picture-cut-menu_slider">
+      <div class="vue-picture-cut-menu_slider-box">
+        <span> 缩放 </span>
+        <input @change="scale" type="range" v-model="zoom" :min="0" :max="10" :step="0.1"/>
+        <div class="vue-picture-cut-menu_slider-box-bar">
+          <div class="vue-picture-cut-menu_slider-box-button"
+               :style="{left: zoom*10 +  '%'}">
+            <div class="vue-picture-cut-menu_slider-box-tips">
+              {{ zoom }}
             </div>
           </div>
         </div>
@@ -23,19 +37,19 @@
       <div class="vue-picture-cut-menu_box-content">
         <!-- 13 * 40 + 38 = 558 -->
         <div class="vue-picture-cut-menu_box-list" style="width: 558px">
-          <div class="vue-picture-cut-menu_box-item v-p-icon_flip-v" @click="setFlipV"></div>
+          <!-- <div class="vue-picture-cut-menu_box-item v-p-icon_flip-v" @click="setFlipV"></div>
           <div class="vue-picture-cut-menu_box-item v-p-icon_flip-h" @click="setFlipH"></div>
-          <span></span>
+          <span></span> -->
           <div class="vue-picture-cut-menu_box-item v-p-icon_rotate-left" @click="rotate(90, true)"></div>
           <div class="vue-picture-cut-menu_box-item v-p-icon_rotate-right" @click="rotate(-90, true)"></div>
-          <span></span>
-          <div class="vue-picture-cut-menu_box-item __mask" @click="setMaskResize">
+          <!-- <span></span> -->
+          <!-- <div class="vue-picture-cut-menu_box-item __mask" @click="setMaskResize">
             <div class="__mask">{{ sizeAutoName }}</div>
           </div>
           <div class="vue-picture-cut-menu_box-item __mask" @click="setMaskSizeToOriginal">
             <div class="__mask">{{ sizeRawName }}</div>
-          </div>
-          <div class="vue-picture-cut-menu_box-item __mask" @click="setMaskSize(1,1)">
+          </div> -->
+          <!-- <div class="vue-picture-cut-menu_box-item __mask" @click="setMaskSize(1,1)">
             <div class="__mask">1:1</div>
           </div>
           <div class="vue-picture-cut-menu_box-item __mask" @click="setMaskSize(4,3)">
@@ -55,7 +69,7 @@
           </div>
           <div class="vue-picture-cut-menu_box-item __mask" @click="setMaskSize(2,3)">
             <div class="__mask _4_5">2:3</div>
-          </div>
+          </div> -->
         </div>
       </div>
     </div>
@@ -94,6 +108,7 @@ export default class VuePictureCutMenu extends Vue {
   @Prop({ type: String, default: 'Rotate'}) private menuRotateName!: string;
 
   private sliderAngle = 0;
+  private zoom = 1;
   cutRoot?: VuePictureCut;
 
   get photoRoot(): PhotoRoot | undefined {
@@ -109,6 +124,15 @@ export default class VuePictureCutMenu extends Vue {
     }
   }
 
+  // @Watch('zoom')
+  // watchZoom (to: string): void {
+  //   if (!this.photoRoot) return;
+  //   console.log(to)
+  //   const photoMain = this.photoRoot.getEventList<PhotoMain>('PhotoMain');
+  //   if (photoMain) {
+  //   photoMain?.scale(parseInt(to));
+  //   }
+  // }
   /*******生命周期********/
   @Inject({ from: 'getCutRoot', default: null})
   getCutRoot?: () => VuePictureCut;
@@ -118,7 +142,11 @@ export default class VuePictureCutMenu extends Vue {
       this.cutRoot = this.getCutRoot();
     }
   }
-
+  protected mounted(): void{
+    this.$bus.$on('scale',(zoom) =>{
+      this.zoom = zoom
+    })
+  }
   /*******事件********/
   @Emit('on-change')
   onChangeEvent (blob: Blob | null, base64: string): {blob: Blob | null; base64: string} {
@@ -129,6 +157,11 @@ export default class VuePictureCutMenu extends Vue {
     return;
   }
   /*******事件********/
+  scale(): void{
+    if (!this.photoRoot) return;
+    const photoMain = this.photoRoot.getEventList<PhotoMain>('PhotoMain');
+    photoMain?.scale(this.zoom,'origin');
+  }
   // 裁剪
   sureCut(): void{
     if (!this.photoRoot) return;

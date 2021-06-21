@@ -1,6 +1,7 @@
 import createAnimation from './animation';
 import $tool from './tool';
 import PhotoRoot from './PhotoRoot';
+import vue from '../../main'
 import {
   AnimationInterface,
   DoubleToucheEvent,
@@ -128,6 +129,7 @@ export default class PhotoMain implements PhotoBasic{
    */
   reset(): void {
     if (this.img) {
+      console.log('reset')
       this._initRect();
       this.showRect.r = 0;
       this.showRect.sV = 1;
@@ -304,13 +306,18 @@ export default class PhotoMain implements PhotoBasic{
    * 缩放
    * @param zoom  缩放系数，大于1(放大)，大于0小于1(缩小)
    */
-  scale(zoom: number): void{
+  scale(zoom: number,type?: string): void{
     if (!this.img || zoom < 0 || zoom === 1) return;
     this.scaleTimer !== null && clearTimeout(this.scaleTimer);
     this.animation?.abort();
     this.touchstartPoint = {x: 0, y: 0};
     const offPoint = this._changePointByCanvas(this.showRect);
-    this._scaleByZoom(zoom, offPoint);
+    if(type==='origin'){
+      this._scaleByNumber(zoom, offPoint)
+    }else {
+      this._scaleByZoom(zoom, offPoint);
+
+    }
     this._draw(this.imgRect, this.showRect);
     this.scaleTimer = setTimeout(() => {
       const [offX, offY, offW, offH] = this._checkRange();
@@ -423,74 +430,79 @@ export default class PhotoMain implements PhotoBasic{
    * @private
    */
   private _draw(imgRect: Rect, showRect: RectFull): void {
-    this.clear();
-    if (this.img) {
-      const { x, y, w, h, r, sV, sH} = showRect;
-      const ctx = this.ctx;
-      ctx.save();
-      ctx.rotate(-r * Math.PI / 180);
-
-      ctx.translate(x , y);
-      ctx.scale(sH, sV);
-
-      ctx.drawImage(this.img,
-        imgRect.x, imgRect.y, imgRect.w, imgRect.h,
-        -w / 2, -h /2, w, h);
-
-      ctx.scale(-sH, -sV);
-      ctx.translate(-x, -y);
-
-      if (this.root.debug) {
-        ctx.strokeStyle = '#0f0';
-        ctx.lineWidth = 2;
-        for (let i = 0; i < this.root.drawHeight / 200; i++) {
-          ctx.beginPath();
-          ctx.moveTo(-this.root.core.x,i * 100 + 50);
-          ctx.lineTo(this.root.core.x,i * 100 + 50);
-          ctx.stroke();
-          ctx.closePath();
-          ctx.beginPath();
-          ctx.moveTo(-this.root.core.x,-i * 100 - 50);
-          ctx.lineTo(this.root.core.x,-i * 100 - 50);
-          ctx.stroke();
-          ctx.closePath();
-        }
-        for (let i = 0; i < this.root.drawWidth / 200; i++) {
-          ctx.beginPath();
-          ctx.moveTo(i * 100 + 50, -this.root.core.y);
-          ctx.lineTo(i * 100 + 50, this.root.core.y);
-          ctx.stroke();
-          ctx.closePath();
-          ctx.beginPath();
-          ctx.moveTo(-i * 100 - 50, -this.root.core.y);
-          ctx.lineTo(-i * 100 - 50, this.root.core.y);
-          ctx.stroke();
-          ctx.closePath();
-        }
-
-        if (this.moveRect.minX !== null &&
-          this.moveRect.maxX !== null &&
-          this.moveRect.minY !== null &&
-          this.moveRect.maxY !== null) {
-          ctx.strokeStyle = '#00f';
-          ctx.fillStyle = 'rgba(0,0,0,0)';
+    const zoomNow = Number((showRect.w/imgRect.w).toFixed(1))
+    console.log(zoomNow,'zoomNow')
+    vue.$bus.$emit('scale',zoomNow>10?10:zoomNow)
+    if(zoomNow<=10){
+      this.clear();
+      if (this.img) {
+        const { x, y, w, h, r, sV, sH} = showRect;
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.rotate(-r * Math.PI / 180);
+  
+        ctx.translate(x , y);
+        ctx.scale(sH, sV);
+        ctx.drawImage(this.img,
+          imgRect.x, imgRect.y, imgRect.w, imgRect.h,
+          -w / 2, -h /2, w, h);
+        ctx.scale(-sH, -sV);
+        ctx.translate(-x, -y);
+  
+        if (this.root.debug) {
+          ctx.strokeStyle = '#0f0';
           ctx.lineWidth = 2;
-          ctx.strokeRect(
-            this.moveRect.minX,
-            this.moveRect.minY,
-            this.moveRect.maxX - this.moveRect.minX,
-            this.moveRect.maxY - this.moveRect.minY);
+          for (let i = 0; i < this.root.drawHeight / 200; i++) {
+            ctx.beginPath();
+            ctx.moveTo(-this.root.core.x,i * 100 + 50);
+            ctx.lineTo(this.root.core.x,i * 100 + 50);
+            ctx.stroke();
+            ctx.closePath();
+            ctx.beginPath();
+            ctx.moveTo(-this.root.core.x,-i * 100 - 50);
+            ctx.lineTo(this.root.core.x,-i * 100 - 50);
+            ctx.stroke();
+            ctx.closePath();
+          }
+          for (let i = 0; i < this.root.drawWidth / 200; i++) {
+            ctx.beginPath();
+            ctx.moveTo(i * 100 + 50, -this.root.core.y);
+            ctx.lineTo(i * 100 + 50, this.root.core.y);
+            ctx.stroke();
+            ctx.closePath();
+            ctx.beginPath();
+            ctx.moveTo(-i * 100 - 50, -this.root.core.y);
+            ctx.lineTo(-i * 100 - 50, this.root.core.y);
+            ctx.stroke();
+            ctx.closePath();
+          }
+  
+          if (this.moveRect.minX !== null &&
+            this.moveRect.maxX !== null &&
+            this.moveRect.minY !== null &&
+            this.moveRect.maxY !== null) {
+            ctx.strokeStyle = '#00f';
+            ctx.fillStyle = 'rgba(0,0,0,0)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(
+              this.moveRect.minX,
+              this.moveRect.minY,
+              this.moveRect.maxX - this.moveRect.minX,
+              this.moveRect.maxY - this.moveRect.minY);
+          }
+  
+          ctx.beginPath();
+          ctx.fillStyle = '#fff';
+          ctx.arc(0, 0, 6, 0, 2 * Math.PI);
+          ctx.fill();
+          ctx.closePath();
         }
-
-        ctx.beginPath();
-        ctx.fillStyle = '#fff';
-        ctx.arc(0, 0, 6, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.closePath();
+  
+        ctx.restore();
+  
       }
-
-      ctx.restore();
     }
+
   }
 
   /**
@@ -562,13 +574,11 @@ export default class PhotoMain implements PhotoBasic{
   wheelChange(zoom: number, point: Point): void {
     if (!this.img) return;
     this.animation?.abort();
-
     this.touchstartEvent = $tool.doubleTouche(point);
     const core = this.touchstartEvent.core;
     const offPoint = this._changePointByImage(core);
     this.touchstartPoint = this._getPointerLocation(offPoint);
     this.root.setPriority(this);
-
     zoom = 1 + zoom * 0.0005;
     zoom = zoom > 1.08 ? 1.08 : zoom < 0.92593 ? 0.92593 : zoom;
     this._scaleByZoom(zoom, point);
@@ -584,6 +594,7 @@ export default class PhotoMain implements PhotoBasic{
     if (offX || offY || offW || offH) {
       this.doAnimation(offX, offY, offW, offH, 0);
     }
+
     this.root.deletePriority(this.className);
   }
 
@@ -666,7 +677,40 @@ export default class PhotoMain implements PhotoBasic{
     this._scaleByZoom(zoom, e.core);
     this.touchstartEvent = e;
   }
-
+  /**
+   * 缩放图片
+   * @param e
+   * @private
+   */
+   private _scaleByNumber(zoom = 1, core: Point, angle = 0): void{
+    let pl = this.touchstartPoint;
+    this.touchstartPoint = { x: pl.x * zoom, y: pl.y * zoom};
+    pl = this.touchstartPoint;
+    const {r, sV, sH} = this.showRect;
+    const {w, h} = this.imgRect;
+    const offPoint = this._changePointByImage(core);
+    const showRect = this.showRect = {
+      x: offPoint.x - pl.x,
+      y: offPoint.y - pl.y,
+      w: w * zoom,
+      h: h * zoom,
+      r: r + angle,
+      sV,
+      sH
+    };
+    const [offX, offY, offW, offH] = this._checkRange(showRect);
+    const isDiff = offX || offY || offW || offH;
+    if (isDiff) {
+      this.showRect = this._getShowRect(offX, offY, offW, offH, 0);
+    }
+    this.root.onPhotoChange && this.root.onPhotoChange({
+      target: this,
+      type: 'imageScale'
+    });
+    if (isDiff) {
+      this.showRect = showRect;
+    }
+  }
   /**
    * 缩放图片
    * @param zoom-

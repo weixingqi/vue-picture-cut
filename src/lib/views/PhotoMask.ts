@@ -347,6 +347,7 @@ export default class PhotoMask implements PhotoBasic {
   }
 
   touchStart(tps: TouchePoint[]): void {
+    console.log('touchStart')
     if (this.resize && this.touche === null) {
       const tp = tps[0];
       this.touchePosition = this._isHover(tp.x, tp.y);
